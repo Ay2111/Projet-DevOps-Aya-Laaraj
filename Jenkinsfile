@@ -1,36 +1,36 @@
 pipeline {
     agent any
     
-    // Configuration de l'outil Maven (qu'on a installé à l'étape précédente)
     tools {
         maven 'Maven3' 
+    }
+    
+    // Ici, on demande à Jenkins de récupérer le secret
+    environment {
+        SLACK_LINK = credentials('slack-secret')
     }
     
     stages {
         stage('Checkout') {
             steps {
-                // Récupération du code depuis GitHub
                 checkout scm
             }
         }
         
         stage('Build & Test') {
             steps {
-                // Compilation et tests (commande sh pour Linux/Docker)
                 sh 'mvn clean package'
             }
         }
         
         stage('Archive') {
             steps {
-                // Archivage du fichier .jar généré
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
         
         stage('Deploy') {
             steps {
-                // Simulation du déploiement
                 echo 'Déploiement de l application...'
             }
         }
@@ -39,8 +39,8 @@ pipeline {
     post {
         always {
             echo 'Envoi de la notification Slack...'
-            // Envoi du message via ton Webhook Slack
-            sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"🚀 Projet DevOps EMSI : Le Build Jenkins est terminé avec succès ! Félicitations Aya !\"}' https://hooks.slack.com/services/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"
+            // On utilise la variable $SLACK_LINK qui contient le secret caché
+            sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"🚀 Projet DevOps EMSI : Le Build Jenkins est terminé avec succès ! Félicitations Aya !\"}' $SLACK_LINK"
         }
     }
 }
